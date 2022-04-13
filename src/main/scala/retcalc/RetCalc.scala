@@ -30,7 +30,7 @@ object RetCalc {
     (capitalAtRetirement, capitalAfterDeath)
   }
 
-  def nbOfMonthsSaving(params: RetCalcParams, returns: Returns): Int = {
+  def nbOfMonthsSaving(params: RetCalcParams, returns: Returns): Option[Int] = {
     import params._
     @tailrec
     def loop(months: Int): Int = {
@@ -42,7 +42,7 @@ object RetCalc {
 
       if (capitalAfterDeath > 0.0) months else loop(months + 1)
     }
-    if (netIncome > currentExpenses) loop(0) else Int.MaxValue
+    if (netIncome > currentExpenses) Some(loop(0)) else None
 
   }
 

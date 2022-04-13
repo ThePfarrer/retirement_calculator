@@ -81,7 +81,7 @@ class RetCalcSpec extends AnyWordSpec with Matchers with TypeCheckedTripleEquals
         FixedReturns(0.04)
       )
       val expected = 23 * 12 + 1
-      actual should ===(expected)
+      actual should ===(Some(expected))
     }
 
     "not crash if the resulting nbOfMonths is very high" in {
@@ -91,7 +91,7 @@ class RetCalcSpec extends AnyWordSpec with Matchers with TypeCheckedTripleEquals
         returns = FixedReturns(0.01)
       )
       val expected = 8280
-      actual should ===(expected)
+      actual should ===(Some(expected))
     }
 
     "not loop forever if I enter bad parameters" in {
@@ -104,7 +104,7 @@ class RetCalcSpec extends AnyWordSpec with Matchers with TypeCheckedTripleEquals
           initialCapital = 10000
         )
       )
-      actual should ===(Int.MaxValue)
+      actual should ===(None)
     }
   }
 
