@@ -12,7 +12,7 @@ object SimulatePlanApp extends App {
       equities = EquityData.fromResource("sp500.tsv"),
       inflations = InflationData.fromResource("cpi.tsv")
     )
-    val (capitalAtRetirement, capitalAfterDeath) = RetCalc.simulatePlan(
+    RetCalc.simulatePlan(
       returns = allReturns.fromUntil(from, until),
       params = RetCalcParams(
         nbOfMonthsInRetirement = nbOfYearsInRetirement * 12,
@@ -21,9 +21,13 @@ object SimulatePlanApp extends App {
         initialCapital = args(5).toInt
       ),
       nbOfMonthsSavings = nbOfYearsSaving * 12
-    )
-    s"""
-       |Capital after $nbOfYearsSaving years of savings: ${capitalAtRetirement.round}
-       |Capital after $nbOfYearsInRetirement years of retirement: ${capitalAfterDeath.round}""".stripMargin
+    ) match {
+      case Right((capitalAtRetirement, capitalAfterDeath)) =>
+        s"""
+        |Capital after $nbOfYearsSaving years of savings: ${capitalAtRetirement.round}
+        |Capital after $nbOfYearsInRetirement years of retirement: ${capitalAfterDeath.round}""".stripMargin
+      case Left(err) => err.message
+    }
+
   }
 }

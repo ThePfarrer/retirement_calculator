@@ -1,10 +1,11 @@
 package retcalc
 
 import org.scalactic.{Equality, TolerantNumerics, TypeCheckedTripleEquals}
+import org.scalatest.EitherValues
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.matchers.should.Matchers
 
-class RetCalcSpec extends AnyWordSpec with Matchers with TypeCheckedTripleEquals {
+class RetCalcSpec extends AnyWordSpec with Matchers with TypeCheckedTripleEquals with EitherValues {
 
   implicit val doubleEquality: Equality[Double] = TolerantNumerics.tolerantDoubleEquality(0.0001)
 
@@ -19,7 +20,7 @@ class RetCalcSpec extends AnyWordSpec with Matchers with TypeCheckedTripleEquals
           initialCapital = 10000
         )
       val expected = 541267.1990
-      actual should ===(expected)
+      actual should ===(Right(expected))
     }
   }
 
@@ -34,7 +35,7 @@ class RetCalcSpec extends AnyWordSpec with Matchers with TypeCheckedTripleEquals
           initialCapital = 541267.1990
         )
       val expected = 309867.53176
-      actual should ===(expected)
+      actual should ===(Right(expected))
     }
   }
 
@@ -47,14 +48,15 @@ class RetCalcSpec extends AnyWordSpec with Matchers with TypeCheckedTripleEquals
 
   "RetCalc.simulatePlan" should {
     "calculate the capital at retirement and the capital after death" in {
-      val (capitalAtRetirement, capitalAfterDeath) =
-        RetCalc.simulatePlan(
-          returns = FixedReturns(0.04),
-          params,
-          nbOfMonthsSavings = 25 * 12
-        )
-      capitalAtRetirement should ===(541267.1990)
-      capitalAfterDeath should ===(309867.5316)
+      RetCalc.simulatePlan(
+        returns = FixedReturns(0.04),
+        params,
+        nbOfMonthsSavings = 25 * 12
+      ) match {
+        case Right((capitalAtRetirement, capitalAfterDeath)) =>
+          capitalAtRetirement should ===(541267.1990)
+          capitalAfterDeath should ===(309867.5316)
+      }
 
     }
 
@@ -68,9 +70,12 @@ class RetCalcSpec extends AnyWordSpec with Matchers with TypeCheckedTripleEquals
             VariableReturn(i.toString, 0.03 / 12)
         )
       )
-      val (capitalAtRetirement, capitalAfterDeath) = RetCalc.simulatePlan(returns, params, nbOfMonthsSavings)
-      capitalAtRetirement should ===(541267.1990)
-      capitalAfterDeath should ===(-57737.7227)
+      RetCalc.simulatePlan(returns, params, nbOfMonthsSavings) match {
+        case Right((capitalAtRetirement, capitalAfterDeath)) =>
+          capitalAtRetirement should ===(541267.1990)
+          capitalAfterDeath should ===(-57737.7227)
+      }
+
     }
   }
 
@@ -81,7 +86,7 @@ class RetCalcSpec extends AnyWordSpec with Matchers with TypeCheckedTripleEquals
         FixedReturns(0.04)
       )
       val expected = 23 * 12 + 1
-      actual should ===(Some(expected))
+      actual should ===(Right(expected))
     }
 
     "not crash if the resulting nbOfMonths is very high" in {
@@ -91,20 +96,21 @@ class RetCalcSpec extends AnyWordSpec with Matchers with TypeCheckedTripleEquals
         returns = FixedReturns(0.01)
       )
       val expected = 8280
-      actual should ===(Some(expected))
+      actual should ===(Right(expected))
     }
 
     "not loop forever if I enter bad parameters" in {
-      val actual = RetCalc.nbOfMonthsSaving(
-        returns = FixedReturns(0.04),
-        params = RetCalcParams(
-          nbOfMonthsInRetirement = 40 * 12,
-          netIncome = 1000,
-          currentExpenses = 2000,
-          initialCapital = 10000
+      val actual = RetCalc
+        .nbOfMonthsSaving(
+          returns = FixedReturns(0.04),
+          params = RetCalcParams(
+            nbOfMonthsInRetirement = 40 * 12,
+            netIncome = 1000,
+            currentExpenses = 2000,
+            initialCapital = 10000
+          )
         )
-      )
-      actual should ===(None)
+      actual should ===(Left(RetCalcError.MoreExpensesThanIncome(1000, 2000)))
     }
   }
 
